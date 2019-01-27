@@ -8,13 +8,6 @@ xsd:		http://www.w3.org/2001/XMLSchema#
 foaf:		http://xmlns.com/foaf/0.1/
 rdfs:		http://www.w3.org/2000/01/rdf-schema#
 
-[SourceDeclaration]
-sourceUri	datasource1
-connectionUrl	jdbc:postgresql://128.130.104.12:5901/postgres
-username	read_only_external
-password	H6LSMMj7FKFH9UwKAnQf
-driverClass	org.postgresql.Driver
-
 [MappingDeclaration] @collection [[
 mappingId	urn:Experiments
 target		:experiment/{experiment_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/Experiment> ; rdfs:label {experiment_name} ; <http://www.w3.org/2006/time#hasBeginning> :{experiment_start} ; <http://www.w3.org/2006/time#hasEnd> :{experiment_stop} ; :defines :rig/{experiment_id} . 
