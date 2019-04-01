@@ -1,176 +1,177 @@
 [PrefixDeclaration]
-:			http://ontologies.ift.at/production_systems.ttl/0.5/
-dc:			http://purl.org/dc/elements/1.1/
+:		http://ontologies.ift.at/production_systems.ttl/0.5/
+cd:		http://ontologies.ift.at/clean_drilling_ontology.ttl/0.1
+dc:		http://purl.org/dc/elements/1.1/
 owl:		http://www.w3.org/2002/07/owl#
 rdf:		http://www.w3.org/1999/02/22-rdf-syntax-ns#
 xml:		http://www.w3.org/XML/1998/namespace
 xsd:		http://www.w3.org/2001/XMLSchema#
 foaf:		http://xmlns.com/foaf/0.1/
+obda:		https://w3id.org/obda/vocabulary#
 rdfs:		http://www.w3.org/2000/01/rdf-schema#
-cd:			http://ontologies.ift.at/clean_drilling_ontology.ttl/0.1
 
 [MappingDeclaration] @collection [[
 mappingId	urn:Experiments
 target		:experiment/{experiment_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/Experiment> ; rdfs:label {experiment_name} ; <http://www.w3.org/2006/time#hasBeginning> :{experiment_start} ; <http://www.w3.org/2006/time#hasEnd> :{experiment_stop} ; :defines :rig/{experiment_id} . 
-source		select experiment_id, experiment_name, experiment_start, experiment_stop from boeing_db_structure.experiments
+source		select CAST (experiment_id AS text) as experiment_id, experiment_name, experiment_start, experiment_stop from boeing_db_structure.experiments
 
 mappingId	urn:ExperimentalRigs
 target		:rig/{experiment_id} <http://www.w3.org/ns/sosa/hosts> :sensor/{sensor} ; :executesProcess :process/{borehole_id} ; <http://www.w3.org/ns/ssn/hasSubsystem> <http://ontologies.ift.at/clean_drilling_ontology/0.1/IFT_Hueller_Hille> , :suctionsystem/{suction_system} ; <http://www.w3.org/2006/time#hasBeginning> :{experiment_start} ; <http://www.w3.org/2006/time#hasEnd> :{experiment_stop} . 
-source		select CAST (borehole_id AS varchar) as borehole_id, experiment_id, suction_system, experiment_start, experiment_stop, sensor from boeing_db_structure.boreholes
+source		select CAST (borehole_id AS text) as borehole_id, CAST (experiment_id AS text) as experiment_id, CAST (suction_system AS text) as suction_system, experiment_start, experiment_stop, CAST (sensor AS text) as sensor from boeing_db_structure.boreholes
 			join boeing_db_structure.experiments on boeing_db_structure.experiments.experiment_id=boreholes.experiment
 			join boeing_db_structure.sensor_deployments on boeing_db_structure.experiments.experiment_id=sensor_deployments.experiment
 
 mappingId	urn:Processes
 target		:process/{borehole_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/Drilling> ; :createsFeature :borehole/{borehole_id} ; :usesTool :tool/{tool} ; <http://www.w3.org/2006/time#hasBeginning> :{process_start} ; <http://www.w3.org/2006/time#hasEnd> :{process_stop} ; :hasSubprocess :process/{phase_id} . 
-source		select borehole_id, process_start, process_stop, experiment, tool, phase_id  from boeing_db_structure.boreholes
+source		select CAST (borehole_id AS text) as borehole_id, process_start, process_stop, CAST (experiment AS text) as experiment, CAST (tool AS text) as tool, CAST (phase_id AS text) as phase_id from boeing_db_structure.boreholes
 			join boeing_db_structure.phases on boeing_db_structure.phases.borehole=boreholes.borehole_id
 
-mappingId	urn:VADProcesses			
-target 		:process/{borehole_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/VibrationAssitedDrillingProcess> .
-source		select CAST (borehole_id AS varchar) as borehole_id from boeing_db_structure.boreholes
+mappingId	urn:VADProcesses
+target		:process/{borehole_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/VibrationAssitedDrillingProcess> . 
+source		select CAST (borehole_id AS text) as borehole_id from boeing_db_structure.boreholes
 			join boeing_db_structure.phases on borehole_id=phases.borehole
 			where amp>0
 
-mappingId	urn:NonVADProcesses			
-target 		:process/{borehole_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/NonVibrationAssitedDrillingProcess> .
-source		select distinct borehole_id from boeing_db_structure.boreholes
+mappingId	urn:NonVADProcesses
+target		:process/{borehole_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/NonVibrationAssitedDrillingProcess> . 
+source		select CAST (borehole_id AS text) as borehole_id from boeing_db_structure.boreholes
 			join boeing_db_structure.phases on borehole_id=phases.borehole
 			where amp=0
 
 mappingId	urn:Boreholes
-target		:borehole/{borehole_id} :isFeatureOf :workpiece/{coupon_id} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/holenumber> {hole_number} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/positionRow> {position_row} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/positionColumn> {position_column} ;<http://www.w3.org/ns/ssn/hasProperty> :diameter/{borehole_id} , :roughness/{borehole_id} , :roundness/{borehole_id} , :burrheight/{borehole_id} , :delamination/{borehole_id} ,:breakout/{borehole_id} , :chipresidues/{borehole_id} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/roundnessFitness> {f_roundness}; <http://ontologies.ift.at/clean_drilling_ontology/0.1/roughnessFitness> {f_roughness}; <http://ontologies.ift.at/clean_drilling_ontology/0.1/burrHeightOutFitness> {f_burr_out}; <http://ontologies.ift.at/clean_drilling_ontology/0.1/overallFitness> {f_all} .
-source		select distinct borehole_id, coupon_id, hole_number, position_row, position_column, f_roundness,f_roughness, f_burr_out, f_all 
+target		:borehole/{borehole_id} :isFeatureOf :workpiece/{coupon_id} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/holenumber> {hole_number} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/positionRow> {position_row} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/positionColumn> {position_column} ; <http://www.w3.org/ns/ssn/hasProperty> :diameter/{borehole_id} , :roughness/{borehole_id} , :roundness/{borehole_id} , :burrheight/{borehole_id} , :delamination/{borehole_id} , :breakout/{borehole_id} , :chipresidues/{borehole_id} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/roundnessFitness> {f_roundness} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/roughnessFitness> {f_roughness} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/burrHeightOutFitness> {f_burr_out} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/overallFitness> {f_all} . 
+source		select CAST (borehole_id AS text) as borehole_id, coupon_id, hole_number, position_row, position_column, f_roundness,f_roughness, f_burr_out, f_all
 			from (
-				select fitnesses_inner.borehole, min(f_roundness) as f_roundness, min(f_roughness) as f_roughness, min(f_burr_out) as f_burr_out,
-				min((f_roundness+f_roughness+f_burr_out)/3) as f_all
-				from (
-					select qualitycards.borehole,
-					case when roundness_mean is not null
-						then (0.06-roundness_mean)/0.06*100
-						else null end as f_roundness,
-					case when roughness_ra_mean is not null
-						then (1.6-roughness_ra_mean)/1.6*100
-						else null end as f_roughness,
-					case when burr_height_in is not null	
-						then case 
-						when material='Aluminum' 
-							then (0.127-burr_height_in)/0.127*100
-						when material='Titanium' 
-							then (0.2032-burr_height_in)/0.2032*100
-							else 0 end 
-						else null end as f_burr_in,
-					case when burr_height_out is not null	
-						then case 
-						when material='Aluminum' 
-							then (0.127-burr_height_out)/0.127*100
-						when material='Titanium' 
-							then(0.2032-burr_height_out)/0.2032*100 
-							else 0 end 
-						else null end as f_burr_out
-					from boeing_db_structure.qualitycards
-					join boeing_db_structure.layers on layers.layer_id=qualitycards.layer) as fitnesses_inner
-				group by borehole) as fitnesses_outer
+			select fitnesses_inner.borehole, min(f_roundness) as f_roundness, min(f_roughness) as f_roughness, min(f_burr_out) as f_burr_out,
+			min((f_roundness+f_roughness+f_burr_out)/3) as f_all
+			from (
+			select qualitycards.borehole,
+			case when roundness_mean is not null
+			then (0.06-roundness_mean)/0.06*100
+			else null end as f_roundness,
+			case when roughness_ra_mean is not null
+			then (1.6-roughness_ra_mean)/1.6*100
+			else null end as f_roughness,
+			case when burr_height_in is not null
+			then case
+			when material='Aluminum'
+			then (0.127-burr_height_in)/0.127*100
+			when material='Titanium'
+			then (0.2032-burr_height_in)/0.2032*100
+			else 0 end
+			else null end as f_burr_in,
+			case when burr_height_out is not null
+			then case
+			when material='Aluminum'
+			then (0.127-burr_height_out)/0.127*100
+			when material='Titanium'
+			then(0.2032-burr_height_out)/0.2032*100
+			else 0 end
+			else null end as f_burr_out
+			from boeing_db_structure.qualitycards
+			join boeing_db_structure.layers on layers.layer_id=qualitycards.layer) as fitnesses_inner
+			group by borehole) as fitnesses_outer
 			join boeing_db_structure.qualitycards on fitnesses_outer.borehole=qualitycards.borehole
 			join boeing_db_structure.layers on layers.layer_id=qualitycards.layer
 			join boeing_db_structure.boreholes on fitnesses_outer.borehole=boreholes.borehole_id
 
 mappingId	urn:Plates
 target		:plate/{experiment} rdfs:label {coupon_id} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/consistsOf> :plate/{layer_id} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/thickness> {thickness} . 
-source		select distinct experiment, coupon_id, layer_id, thickness from boeing_db_structure.boreholes
+source		select CAST (experiment AS text) as experiment, coupon_id, CAST (layer_id AS text) as layer_id, thickness from boeing_db_structure.boreholes
 			join boeing_db_structure.qualitycards on qualitycards.borehole=boreholes.borehole_id
 			join boeing_db_structure.layers on layers.layer_id=qualitycards.layer
 
 mappingId	urn:Tools
 target		:tool/{tool_id} a :Drill ; rdfs:label {tool_name} ; <http://www.w3.org/ns/ssn/hasSubsystem> :toolholder{holder_name} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/drillDiameter> {diameter} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/vendor> {vendor} ; owl:versionInfo {verison} . 
-source		select tool_id, holder_name, tool_name, vendor, diameter, verison from boeing_db_structure.tools
+source		select CAST (tool_id AS text) as tool_id, holder_name, tool_name, vendor, diameter, verison from boeing_db_structure.tools
 
 mappingId	urn:ProcessPhase
 target		:process/{phase_id} a :ManufacturingProcess ; rdfs:label {phase_name} ; <http://www.w3.org/2006/time#hasBeginning> :{phase_start} ; <http://www.w3.org/2006/time#hasEnd> :{phase_stop} ; <http://www.w3.org/ns/ssn/hasProperty> :cuttingSpeed/{phase_id} , :peckingAmplitude/{phase_id} , :peckingFrequency/{phase_id} , :toolRotationSpeed/{phase_id} , :feedrate/{phase_id} , :feedratePerTooth/{phase_id} . 
-source		select phase_id, phase_name, phase_start, phase_stop, v_c, f_z, amp, f, n, v_f from boeing_db_structure.phases
+source		select CAST (phase_id AS text) as phase_id, phase_name, phase_start, phase_stop, v_c, f_z, amp, f, n, v_f from boeing_db_structure.phases
 
 mappingId	urn:Sensors
 target		:sensor/{sensor_id} a <http://www.w3.org/ns/sosa/Sensor> ; rdfs:label {signaltype} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/samplingrate> {samplingrate} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/datatable> {data_table} ; <http://www.w3.org/ns/sosa/madeObservation> :observation/{data_table} . 
-source		select sensor_id, samplingrate, signaltype, data_table from boeing_db_structure.sensors
+source		select CAST (sensor_id AS text) as sensor_id, samplingrate, signaltype, data_table from boeing_db_structure.sensors
 
 mappingId	urn:Sensors (Temp)
 target		:sensor/{sensor_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/TemperatureSensor> ; rdfs:label {signaltype} . 
-source		select sensor_id, signaltype from boeing_db_structure.sensors where physical_quantity='Temperature'
+source		select CAST (sensor_id as text) as sensor_id, signaltype from boeing_db_structure.sensors where physical_quantity='Temperature'
 
 mappingId	urn:Sensors (Acceleration)
 target		:sensor/{sensor_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/AccelerationSensor> ; rdfs:label {signaltype} . 
-source		select sensor_id, signaltype from boeing_db_structure.sensors where physical_quantity='Acceleration'
+source		select CAST (sensor_id as text) as sensor_id, signaltype from boeing_db_structure.sensors where physical_quantity='Acceleration'
 
 mappingId	urn:Sensors (Flow)
 target		:sensor/{sensor_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/FlowSensor> ; rdfs:label {signaltype} . 
-source		select sensor_id, signaltype from boeing_db_structure.sensors where physical_quantity='Flow'
+source		select CAST (sensor_id as text) as sensor_id, signaltype from boeing_db_structure.sensors where physical_quantity='Flow'
 
 mappingId	urn:Sensors (Force)
 target		:sensor/{sensor_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/ForceSensor> ; rdfs:label {signaltype} . 
-source		select sensor_id, signaltype from boeing_db_structure.sensors where physical_quantity='Force'
+source		select CAST (sensor_id as text) as sensor_id, signaltype from boeing_db_structure.sensors where physical_quantity='Force'
 
 mappingId	urn:Sensors (Microphone)
 target		:sensor/{sensor_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/Microphone> ; rdfs:label {signaltype} . 
-source		select sensor_id, signaltype from boeing_db_structure.sensors where physical_quantity='Sound'
+source		select CAST (sensor_id as text) as sensor_id, signaltype from boeing_db_structure.sensors where physical_quantity='Sound'
 
 mappingId	urn:Sensors (Position)
 target		:sensor/{sensor_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/PositionSensor> ; rdfs:label {signaltype} . 
-source		select sensor_id, signaltype from boeing_db_structure.sensors where physical_quantity='Position'
+source		select CAST (sensor_id as text) as sensor_id, signaltype from boeing_db_structure.sensors where physical_quantity='Position'
 
 mappingId	urn:Sensors (Pressure)
 target		:sensor/{sensor_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/PressureSensor> ; rdfs:label {signaltype} . 
-source		select sensor_id, signaltype from boeing_db_structure.sensors where physical_quantity='Pressure'
+source		select CAST (sensor_id as text) as sensor_id, signaltype from boeing_db_structure.sensors where physical_quantity='Pressure'
 
 mappingId	urn:CuttingSpeeds
 target		:cuttingSpeed/{phase_id} :nominalValue {v_c} . 
-source		select phase_id, phase_name, phase_start, phase_stop, v_c, f_z, amp, f, n, v_f from boeing_db_structure.phases
+source		select CAST (phase_id as text) as phase_id, phase_name, phase_start, phase_stop, v_c, f_z, amp, f, n, v_f from boeing_db_structure.phases
 
 mappingId	urn:Feedrates
 target		:feedrate/{phase_id} :nominalValue {v_f} . 
-source		select phase_id, v_f from boeing_db_structure.phases
+source		select CAST (phase_id as text) as phase_id, v_f from boeing_db_structure.phases
 
 mappingId	urn:FeedRatePerTooth
 target		:feedratepertooth/{phase_id} :nominalValue {f_z} . 
-source		select phase_id, f_z from boeing_db_structure.phases
+source		select CAST (phase_id as text) as phase_id, f_z from boeing_db_structure.phases
 
 mappingId	urn:RotationSpeed
 target		:rotationspeed/{phase_id} :nominalValue {n} . 
-source		select phase_id, n from boeing_db_structure.phases
+source		select CAST (phase_id as text) as phase_id, n from boeing_db_structure.phases
 
 mappingId	urn:PeckingAmplitude
 target		:peckingamplitude/{phase_id} :nominalValue {amp} . 
-source		select phase_id, amp from boeing_db_structure.phases
+source		select CAST (phase_id as text) as phase_id, amp from boeing_db_structure.phases
 
 mappingId	urn:PeckingFrequency
 target		:peckingfrequency/{phase_id} :nominalValue {f_a} . 
-source		select phase_id, f_a from boeing_db_structure.phases
+source		select CAST (phase_id as text) as phase_id, f_a from boeing_db_structure.phases
 
 mappingId	urn:BurrheightObservation
 target		:observation/burrheight/{qualitycard_id} a <http://www.w3.org/ns/sosa/Observation> ; <http://www.w3.org/ns/sosa/observedProperty> :burrheight/{borehole} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/associatedWithLayer> :plate/{layer} ; <http://www.w3.org/ns/sosa/hasSimpleResult> :{burr_height_in} , :{burr_height_out} . 
-source		select qualitycard_id, borehole, layer, burr_height_in, burr_height_out from boeing_db_structure.qualitycards
+source		select CAST (qualitycard_id as text) as qualitycard_id, CAST (borehole as text) as borehole, layer, burr_height_in, burr_height_out from boeing_db_structure.qualitycards
 
 mappingId	urn:BreakoutObservation
 target		:observation/breakout/{qualitycard_id} a <http://www.w3.org/ns/sosa/Observation> ; <http://www.w3.org/ns/sosa/observedProperty> :breakout/{borehole} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/associatedWithLayer> :plate/{layer} ; <http://www.w3.org/ns/sosa/hasSimpleResult> :{breakout_in} , :{breakout_out} . 
-source		select qualitycard_id, borehole, layer, breakout_in, breakout_out from boeing_db_structure.qualitycards
+source		select CAST (qualitycard_id as text) as qualitycard_id, CAST (borehole as text) as borehole, CAST (layer as text) as layer, breakout_in, breakout_out from boeing_db_structure.qualitycards
 
 mappingId	urn:RoughnessObservation
 target		:observation/roughness/{qualitycard_id} a <http://www.w3.org/ns/sosa/Observation> ; <http://www.w3.org/ns/sosa/observedProperty> :roughness/{borehole} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/associatedWithLayer> :plate/{layer} ; <http://www.w3.org/ns/sosa/hasSimpleResult> :{roughness_ra_1} , :{roughness_ra_2} , :{roughness_ra_3} , :{roughness_ra_mean} , :{roughness_ra_s} , :{roughness_rz_1} , :{roughness_rz_2} , :{roughness_rz_3} , :{roughness_rz_mean} , :{roughness_rz_s} . 
-source		select qualitycard_id, layer, borehole, roughness_ra_1, roughness_ra_2, roughness_ra_3, roughness_ra_mean, roughness_ra_s, roughness_rz_1, roughness_rz_2, roughness_rz_3, roughness_rz_mean, roughness_rz_s from boeing_db_structure.qualitycards
+source		select CAST (qualitycard_id as text) as qualitycard_id, CAST (layer as text) as layer, CAST (borehole as text) as borehole, roughness_ra_1, roughness_ra_2, roughness_ra_3, roughness_ra_mean, roughness_ra_s, roughness_rz_1, roughness_rz_2, roughness_rz_3, roughness_rz_mean, roughness_rz_s from boeing_db_structure.qualitycards
 
 mappingId	urn:RoundnessObservation
 target		:observation/roundness/{qualitycard_id} a <http://www.w3.org/ns/sosa/Observation> ; <http://www.w3.org/ns/sosa/observedProperty> :roundness/{borehole} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/associatedWithLayer> :plate/{layer} ; <http://www.w3.org/ns/sosa/hasSimpleResult> :{roundness_2} , :{roundness_4} , :{roundness_6} , :{roundness_mean} , :{roundness_s} . 
-source		select layer, qualitycard_id, borehole, roundness_2, roundness_4, roundness_6, roundness_mean, roundness_s from boeing_db_structure.qualitycards
+source		select CAST (layer as text) as layer, CAST (qualitycard_id as text) as qualitycard_id, CAST (borehole as text) as borehole, roundness_2, roundness_4, roundness_6, roundness_mean, roundness_s from boeing_db_structure.qualitycards
 
 mappingId	urn:ChipResiduesObservation
 target		:observation/chipresidues/{qualitycard_id} a <http://www.w3.org/ns/sosa/Observation> ; <http://www.w3.org/ns/sosa/observedProperty> :chipresidues/{borehole} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/associatedWithLayer> :plate/{layer} ; <http://www.w3.org/ns/sosa/hasSimpleResult> :{chip_residues} . 
-source		select layer, qualitycard_id, borehole, chip_residues from boeing_db_structure.qualitycards
+source		select CAST (layer as text) as layer, CAST (qualitycard_id as text) as qualitycard_id, CAST (borehole as text) as borehole, chip_residues from boeing_db_structure.qualitycards
 
 mappingId	urn:CoatedDrills
 target		:tool/{tool_id} a <http://ontologies.ift.at/clean_drilling_ontology/0.1/CoatedDrill> ; rdfs:label {tool_name} ; <http://www.w3.org/ns/ssn/hasSubsystem> :toolholder{holder_name} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/drillDiameter> {diameter} ; <http://ontologies.ift.at/clean_drilling_ontology/0.1/vendor> {vendor} ; owl:versionInfo {verison} . 
-source		select tool_id, holder_name, tool_name, vendor, diameter, verison from boeing_db_structure.tools where coating=True
+source		select CAST (tool_id as text) as tool_id, holder_name, tool_name, vendor, diameter, verison from boeing_db_structure.tools where coating=True
 
 mappingId	urn:Layers
 target		:plate/{layer_id} <http://ontologies.ift.at/clean_drilling_ontology/0.1/rawMaterial> {material} . 
-source		select distinct layer_id, material from boeing_db_structure.boreholes
+source		select CAST (layer_id as text) as layer_id, material from boeing_db_structure.boreholes
 			join boeing_db_structure.qualitycards on qualitycards.borehole=boreholes.borehole_id
 			join boeing_db_structure.layers on layers.layer_id=qualitycards.layer
 ]]
